@@ -29,12 +29,15 @@
 namespace penrose {
 namespace led {
 
+// No alignment attribute: the build packs structs, and an aligned member
+// inside a packed container only produces warnings. AVR has no alignment
+// requirement for pointer loads.
 struct Pin
 {
     volatile uint8_t* port;
     volatile uint8_t* ddr;
     uint8_t pin_number;
-} __attribute__ ((aligned (2)));
+};
 
 struct CharlieplexPair
 {
