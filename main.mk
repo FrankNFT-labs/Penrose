@@ -18,7 +18,7 @@ TARGET_DIR := $(BUILD_DIR)/artifact
 
 DEFS :=
 
-RELEASE_VERSION := 0.1.1
+RELEASE_VERSION := 1.0.0
 
 # ------------------------------------------------------------------------------
 # Artifacts
