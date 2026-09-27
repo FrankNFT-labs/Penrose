@@ -41,10 +41,20 @@ OPTFLAGS := \
 TGT_CFLAGS := -O0 -ggdb $(ARCHFLAGS) $(OPTFLAGS) $(WARNFLAGS) -std=gnu11
 TGT_CXXFLAGS := -O0 -ggdb $(ARCHFLAGS) $(OPTFLAGS) $(WARNFLAGS) -std=gnu++17
 
-TGT_LDLIBS := -lm -lc -lgcc
+# The compiler driver links its own runtime library, and macOS has no libgcc.
+TGT_LDLIBS := -lm -lc
+ifeq ($(shell uname -s),Darwin)
+# Apple's linker does not understand the GNU ld options below.
+TGT_LDFLAGS := $(ARCHFLAGS) -L$(TARGET_DIR) \
+	-Wl,-dead_strip \
+	-Wl,-map,$(T_MAP) \
+
+else
 TGT_LDFLAGS := $(ARCHFLAGS) -L$(TARGET_DIR) \
 	-Wl,--gc-sections \
 	-Wl,-Map=$(T_MAP) \
+
+endif
 
 define TGT_POSTMAKE
 endef
