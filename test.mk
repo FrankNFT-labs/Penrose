@@ -24,9 +24,18 @@ TGT_DEFS := \
 
 CPPFLAGS := -g -Wall -Wextra -iquote .
 TGT_CFLAGS := $(CPPFLAGS) -std=gnu11
-TGT_CXXFLAGS := $(CPPFLAGS) -std=gnu++14 -pthread -Wold-style-cast
+# GoogleTest 1.17 and later require C++17, and the tests already use it.
+TGT_CXXFLAGS := $(CPPFLAGS) -std=gnu++17 -pthread -Wold-style-cast
 
 TGT_LDLIBS := -lgtest -lpthread -lz -lgtest_main
+
+ifeq ($(shell uname -s),Darwin)
+# Homebrew's GoogleTest lives outside the default search paths. It is built
+# with libc++, so the tests must be compiled with clang, the platform default.
+BREW_PREFIX := $(shell brew --prefix 2>/dev/null)
+TGT_CXXFLAGS += -isystem $(BREW_PREFIX)/include
+TGT_LDFLAGS := -L$(BREW_PREFIX)/lib
+endif
 
 .PHONY: tests
 tests: $(TARGET_DIR)/$(TARGET)
