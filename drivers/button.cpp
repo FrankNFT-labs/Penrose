@@ -25,6 +25,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
+#include "drivers/debounce.h"
 #include "drivers/profiling.h"
 
 #define COL0_PIN        PD0
@@ -53,11 +54,12 @@ namespace button {
 
 static constexpr uint8_t kNumColumns = 4;
 static constexpr uint8_t kNumRows = 3;
+static constexpr uint8_t kNumButtons = kNumColumns * kNumRows;
 
 static uint8_t column_;
 static uint8_t row_;
 static uint16_t toggle_state_;
-static uint16_t press_state_;
+static Debouncer<kNumButtons> debouncer_;
 
 static void AllRowsOff(void)
 {
@@ -93,7 +95,7 @@ void Init(void)
     column_ = 0;
     row_ = 0;
     toggle_state_ = 0;
-    press_state_ = 0;
+    debouncer_.Init();
 }
 
 void SetButtonStates(uint16_t bitpacked_states)
@@ -115,20 +117,14 @@ bool Scan(void)
     uint8_t pins = COL_INPUT;
     AllRowsOff();
 
-    uint16_t button_bit = (~pins & _BV(column_)) << (kNumColumns * row_);
     uint8_t button_number = column_ + kNumColumns * row_;
+    // A closed contact pulls the column low through the selected row.
+    bool contact = (pins & _BV(column_)) == 0;
+    bool press = debouncer_.Update(button_number, contact);
 
-    bool change = button_bit != (press_state_ & _BV(button_number));
-    bool press = button_bit && !(press_state_ & _BV(button_number));
-
-    if (change)
+    if (press)
     {
-        press_state_ ^= _BV(button_number);
-
-        if (press)
-        {
-            toggle_state_ ^= _BV(button_number);
-        }
+        toggle_state_ ^= _BV(button_number);
     }
 
     column_++;
