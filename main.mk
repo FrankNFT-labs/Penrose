@@ -45,14 +45,14 @@ DIST_ZIP := penrose-$(RELEASE_VERSION).zip
 %.lss: %.elf
 	avr-objdump -CdhtS $^ > $@
 
+# avr-size's Berkeley columns are misleading for AVR: "text" already includes
+# .data (its initialisers live in flash) and "data" is the EEPROM image. Sum
+# the sections by name instead: flash = .text + .data, static RAM = .data +
+# .bss + .noinit, EEPROM = .eeprom.
 define ANALYZE
 @$(MAKE) $(1:.elf=.lss)
-@echo 'BINARY SIZE:' \
-	$$(avr-size $(1) | tail -n1 | \
-	awk '{ printf "0x%05X %d", $$1+$$2, $$1+$$2 }')
-@echo 'RAM USAGE:  ' \
-	$$(avr-size $(1) | tail -n1 | \
-	awk '{ printf "0x%05X %d", $$2+$$3, $$2+$$3 }')
+@avr-size -A $(1) | \
+	awk '$$1 == ".text" || $$1 == ".data" { flash += $$2 } $$1 == ".data" || $$1 == ".bss" || $$1 == ".noinit" { ram += $$2 } $$1 == ".eeprom" { eeprom += $$2 } END { printf "FLASH:  0x%05X %d bytes\nRAM:    0x%05X %d bytes (static)\nEEPROM: 0x%05X %d bytes\n", flash, flash, ram, ram, eeprom, eeprom }'
 endef
 
 define CLEAN_ANALYSIS
