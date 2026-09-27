@@ -16,6 +16,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <cstdint>
 #include <cmath>
 #include "app/quantizer.h"
@@ -29,7 +30,9 @@ constexpr double kVRef = 5.0;
 constexpr double kCVInGain = 49.9 / 100.0;
 constexpr double kVoltsPerLSB = kVRef / kCVInGain / 1024;
 
-static constexpr uint16_t GetADCCode(double volts)
+// Not constexpr: std::round is not a constant expression outside GCC, and
+// this helper is only used at run time.
+static uint16_t GetADCCode(double volts)
 {
     int32_t code = std::round(volts / kVoltsPerLSB);
     return std::max(0, std::min(1023, code));
@@ -40,7 +43,8 @@ static constexpr double GetVolts(uint16_t adc_code)
     return adc_code * kVoltsPerLSB;
 }
 
-constexpr int32_t kMaxSemitone = std::floor(GetVolts(1023) * 12);
+// Truncation instead of std::floor for the same reason; the value is positive.
+constexpr int32_t kMaxSemitone = static_cast<int32_t>(GetVolts(1023) * 12);
 
 class QuantizerTest : public ::testing::Test
 {

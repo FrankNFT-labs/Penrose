@@ -33,7 +33,9 @@ constexpr float kVRef = 5.0;
 constexpr float kCVInGain = 49.9 / 100.0;
 constexpr float kVoltsPerLSB = kVRef / kCVInGain / 1024;
 constexpr float kLSBsPerSemitone = 1 / (kVoltsPerLSB * 12);
-constexpr int16_t kMaxSemitone = floor(1023 * kVoltsPerLSB * 12);
+// Truncation instead of floor(): the value is positive, and floor() is not a
+// constant expression outside GCC.
+constexpr int16_t kMaxSemitone = static_cast<int16_t>(1023 * kVoltsPerLSB * 12);
 
 extern const int16_t PitchLookup[] PROGMEM;
 extern const int8_t OctaveLookup[] PROGMEM;
