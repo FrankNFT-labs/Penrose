@@ -26,6 +26,12 @@ TGT_DEFS := \
 	F_CPU=20000000UL \
 	__PROG_TYPES_COMPAT__ \
 
+# The profiling output on PC6 (drivers/profiling.h) is a debug aid. Release
+# builds compile it out; use `make PROFILE=1 app` to keep it.
+ifneq ($(PROFILE),1)
+TGT_DEFS += NDEBUG
+endif
+
 TGT_INCDIRS := .
 
 ARCHFLAGS := -mmcu=atmega168
